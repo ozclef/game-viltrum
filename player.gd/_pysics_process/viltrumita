@@ -1,0 +1,40 @@
+var velocity = Vector3.ZERO
+
+var base_speed = 12
+var boost_speed = 35
+
+var acceleration = 4
+var deceleration = 6
+
+var current_speed = 0
+
+func _physics_process(delta):
+
+	var input_dir = Vector3.ZERO
+	
+	# INPUT 3D
+	input_dir.x = Input.get_action_strength("left") - Input.get_action_strength("right")
+	input_dir.y = Input.get_action_strength("up") - Input.get_action_strength("down")
+	input_dir.z = Input.get_action_strength("forward") - Input.get_action_strength("backward")
+	
+	# ROTAR SEGÚN CÁMARA
+	var h_rot = $Camroot/h.global_transform.basis.get_euler().y
+	input_dir = input_dir.rotated(Vector3.UP, h_rot).normalized()
+	
+	# BOOST
+	var target_speed = base_speed
+	if Input.is_action_pressed("sprint"):
+		target_speed = boost_speed
+	
+	# SI HAY INPUT → ACELERA
+	if input_dir != Vector3.ZERO:
+		current_speed = lerp(current_speed, target_speed, delta * acceleration)
+	else:
+		# SI NO → FRENA EN SECO
+		current_speed = lerp(current_speed, 0, delta * deceleration)
+	
+	# INERCIA (CLAVE)
+	var target_velocity = input_dir * current_speed
+	velocity = velocity.linear_interpolate(target_velocity, delta * 5)
+	
+	move_and_slide(velocity, Vector3.UP)
